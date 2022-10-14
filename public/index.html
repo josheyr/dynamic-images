@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+
+<html lang="eng">
+<!-- The head section -->
+    <head>
+        <title>Dynamic Imagery</title>
+    </head>
+    <body>
+        <h1>
+            Concept for dynamic image generation
+        </h1>
+        <p>This is a very simple demonstration of the power of SVGs for dynamic image generation.</p>
+        <p>Start by using the FabricJS canvas to design your image. We can then plug the SVG output into our endpoint which replaces the data and spits out conversions using an SVG to PNG library.</p>
+        <p>TODO: Save and load config, store config in URL fragment / local storage.</p>
+
+        <div>
+            <h2>
+                Media items
+            </h2>
+            <ul>
+
+            </ul>
+            <form>
+                <h3>Add text media</h3>
+                <label for="textMedia">Text</label>
+                <input type="text" id="textMedia">
+
+                <button id="textMediaButton">Add text</button>
+                <br>
+
+                <label for="textDynamicMediaName">Text column name</label>
+                <input type="text" id="textDynamicMediaName">
+
+                <label for="textDynamicMediaPlaceholder">Example text</label>
+                <input type="text" id="textDynamicMediaPlaceholder">
+
+                <button id="textDynamicMediaButton">Add dynamic text</button>
+            </form>
+            <form>
+                <h3>Add image media</h3>
+                <label for="imageMedia">Image url</label>
+                <input type="text" id="imageMedia">
+
+                <button  id="imageMediaButton">Add image</button>
+                <br>
+
+                <label for="imageDynamicMediaName">Image url column name</label>
+                <input type="text" id="imageDynamicMediaName">
+
+                <label for="imageDynamicMediaPlaceholder">Example image url</label>
+                <input type="text" id="imageDynamicMediaPlaceholder">
+
+                <button id="imageDynamicMediaButton">Add dynamic image</button>
+            </form>
+        </div>
+        <div>
+            <h2>
+                Canvas
+            </h2>
+            <canvas id="canvas"></canvas>
+            <button id="generateImage">Generate image</button>
+
+            </br>
+            <h3>Generate dynamic images</h3>
+
+            <label for="csvFile">Upload CSV</label>
+            <input type="file" id="csvFile" name="csv">
+            <button id="generateImages">Generate images</button>
+        </div>
+    </body>
+    <footer>
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+        <script src="https://unpkg.com/fabric@5.2.4/dist/fabric.min.js"></script>
+    </footer>
+    <style>
+        #canvas {
+            border: 1px solid black;
+        }
+    </style>
+    <script>
+        var canvas = new fabric.Canvas('canvas', {
+            width: 500,
+            height: 500,
+        });
+
+        // on addImage click
+        // add image to canvas
+        $("#imageMediaButton").click(function (e) {
+            e.preventDefault();
+            var imageUrl = $("#imageMedia").val();
+            var imageId = "image" + Math.floor(Math.random() * 1000000);
+
+            var imgInstance = new fabric.Image.fromURL(imageUrl, function (imgInstance) {
+                imgInstance.id = imageId;
+                canvas.add(imgInstance);
+            });
+
+
+            addMediaItemToList(imageId, imageUrl, "image");
+        });
+
+        $("#textMediaButton").click(function (e) {
+            e.preventDefault();
+            var textMedia = $("#textMedia").val();
+            var textId = "text" + Math.floor(Math.random() * 1000000);
+
+            var textInstance = new fabric.Textbox(textMedia, {
+                id: textId,
+                media_type: "text",
+                width: 200,
+                fontSize: 20,
+                textAlign: "center",
+                fill: "#000",
+                top: 100,
+                left: 100
+            });
+
+            canvas.add(textInstance);
+
+            addMediaItemToList(textId, textMedia, "text");
+        });
+
+        $("#textDynamicMediaButton").click(function (e) {
+            e.preventDefault();
+            var textMedia = $("#textDynamicMediaPlaceholder").val();
+            var textId = "text" + Math.floor(Math.random() * 1000000);
+
+            var textInstance = new fabric.Textbox(textMedia, {
+                id: textId,
+                mediaType: "dynamic_text",
+                mediaColumn: $("#textDynamicMediaName").val(),
+                mediaPlaceholder: textMedia,
+                width: 200,
+                fontSize: 20,
+                textAlign: "center",
+                fill: "#000",
+                top: 100,
+                left: 100
+            });
+
+            canvas.add(textInstance);
+
+            addMediaItemToList(textId, textMedia + " (" + $("#textDynamicMediaName").val() + ")", "text");
+        });
+
+        $("#imageDynamicMediaButton").click(function (e) {
+            e.preventDefault();
+            var imageUrl = $("#imageDynamicMediaPlaceholder").val();
+            var imageId = "image" + Math.floor(Math.random() * 1000000);
+
+            var imgInstance = new fabric.Image.fromURL(imageUrl, function (imgInstance) {
+                imgInstance.id = imageId;
+                imgInstance.mediaType = "dynamic_image";
+                imgInstance.mediaColumn = $("#imageDynamicMediaName").val();
+                imgInstance.mediaPlaceholder = imageUrl;
+                canvas.add(imgInstance);
+            });
+
+            addMediaItemToList(imageId, imageUrl + " (" + $("#imageDynamicMediaName").val() + ")", "image");
+        });
+
+        function addMediaItemToList(id, name, type) {
+            var mediaItem = $("<li></li>");
+            mediaItem.attr("id", id);
+            mediaItem.attr("data-type", type);
+            mediaItem.text(name);
+
+            // add delete button
+            var deleteButton = $("<button></button>");
+            deleteButton.text("Delete");
+            deleteButton.attr("data-id", id);
+
+            deleteButton.click(function (e) {
+                e.preventDefault();
+                var id = $(this).attr("data-id");
+                var mediaItem = $("#" + id);
+                var type = mediaItem.attr("data-type");
+
+                if (type === "image" || type === "text") {
+                    var canvasItem = canvas.getObjects().find(function (obj) {
+                        return obj.id === id;
+                    });
+
+                    canvas.remove(canvasItem);
+                }
+
+                mediaItem.remove();
+            });
+
+            mediaItem.append(deleteButton);
+
+            $("ul").append(mediaItem);
+        }
+
+        async function getCanvasSvg() {
+            // loop through all items in canvas, if it has the "type" attribute
+            // replace the data with the value of the "data" attribute
+            // foreach in canvas.getObjects()
+
+
+            for (const obj of canvas.getObjects()) {
+                if (obj.mediaType === "dynamic_text") {
+                    obj.text = "{{" + obj.mediaColumn + "}}"
+                }
+
+                if (obj.mediaType === "dynamic_image") {
+                    await new Promise((resolve) => {
+                        obj.setSrc("http://localhost:8080/emptypixel/{{" + obj.mediaColumn + "}}.png", function () {
+                            resolve();
+                        });
+                    });
+                }
+            }
+
+            canvas.renderAll();
+
+            var svg = canvas.toSVG();
+
+            for (const obj of canvas.getObjects()) {
+                if (obj.mediaType === "dynamic_text") {
+                    obj.text = obj.mediaPlaceholder
+                }
+
+                if (obj.mediaType === "dynamic_image") {
+                    await new Promise((resolve) => {
+                        obj.setSrc(obj.mediaPlaceholder, function () {
+                            resolve();
+                        });
+                    });
+                }
+            }
+
+            canvas.renderAll();
+
+            return svg;
+        }
+
+        async function generateSingleImage() {
+            var data = new FormData();
+            data.append("svg", await getCanvasSvg());
+
+            fetch("http://localhost:8080/single", {
+                method: "POST",
+                body: data
+            }).then(function (response) {
+                // response is a png, download it
+                return response.blob().then(function (blob) {
+                    var url = window.URL.createObjectURL(blob);
+                    var a = document.createElement('a');
+                    a.href = url;
+                    a.download = 'image.png';
+                    a.click();
+                });
+            }).then(function (data) {
+                console.log(data);
+            });
+        }
+
+        $("#generateImage").click(function (e) {
+            e.preventDefault();
+            generateSingleImage();
+        });
+
+        async function generateDynamicImages() {
+            var data = new FormData();
+            data.append("svg", await getCanvasSvg());
+            data.append("csv", $("#csvFile")[0].files[0]);
+
+            fetch("http://localhost:8080/dynamic", {
+                method: "POST",
+                body: data
+            }).then(function (response) {
+                // response is a zip, download it
+                return response.blob().then(function (blob) {
+                    var url = window.URL.createObjectURL(blob);
+                    var a = document.createElement('a');
+                    a.href = url;
+                    a.download = 'images.zip';
+                    a.click();
+                });
+            }).then(function (data) {
+                console.log(data);
+            });
+        }
+
+        $("#generateImages").click(function (e) {
+            e.preventDefault();
+            generateDynamicImages();
+        });
+    </script>
+</html>

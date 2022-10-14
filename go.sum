@@ -1,0 +1,6 @@
+github.com/gorilla/mux v1.8.0 h1:i40aqfkR1h2SlN9hojwV5ZA91wcXFOvkdNIeFDP5koI=
+github.com/gorilla/mux v1.8.0/go.mod h1:DVbg23sWSpFRCP0SfiEN6jmj59UnW/n46BH5rLB71So=
+github.com/josheyr/svg2png v0.0.0-20221013202057-8df475b908fe h1:cVl82BOcnFTiiunwZvSU9Rp/F6u4/yk7PfIYF3oj/ts=
+github.com/josheyr/svg2png v0.0.0-20221013202057-8df475b908fe/go.mod h1:7NtCHGe9KcLznWNxZMVoT0unnbAk0gQbriB8sgIxSr8=
+github.com/josheyr/svg2png v0.0.0-20221014092041-888ba2f32c93 h1:bvPtOp+5qUozXIxft77RFKZhaNpLoOYJRAQIST8v+k4=
+github.com/josheyr/svg2png v0.0.0-20221014092041-888ba2f32c93/go.mod h1:7NtCHGe9KcLznWNxZMVoT0unnbAk0gQbriB8sgIxSr8=
